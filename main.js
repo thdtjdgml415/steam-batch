@@ -41,15 +41,16 @@ const steamAppsQuery = `
 
 const gamePriceQuery = `
   INSERT INTO price_overviews (
-    steam_appid, currency, initial, final, discount_percent
+    appid, currency, initial, final, discount_percent, updated_at
   ) VALUES (
-    $1, $2, $3, $4, $5,
-    $6, $7, $8,
-    $9, $10, $11, $12,
-    $13, $14, $15
+    $1, $2, $3, $4, $5, CURRENT_TIMESTAMP
   )
-  ON CONFLICT (steam_appid) DO UPDATE SET
-
+  ON CONFLICT (appid) DO UPDATE SET
+    currency = EXCLUDED.currency,
+    initial = EXCLUDED.initial,
+    final = EXCLUDED.final,
+    discount_percent = EXCLUDED.discount_percent,
+    updated_at = CURRENT_TIMESTAMP;
 `;
 
 // 한국어 날짜 → ISO 형식 변환 함수
@@ -111,17 +112,15 @@ async function processGame(client, appId) {
       data.capsule_imagev5,
     ]);
 
-    // // 2. 가격 정보
-    // if (data.price_overview) {
-    //   await client.query(priceQuery, [
-    //     data.steam_appid,
-    //     data.price_overview.currency,
-    //     data.price_overview.initial / 100,
-    //     data.price_overview.final / 100,
-    //     data.price_overview.discount_percent,
-    //     JSON.stringify(data.price_overview),
-    //   ]);
-    // }
+    if (data.price_overview) {
+      await client.query(gamePriceQuery, [
+        data.steam_appid,
+        data.price_overview.currency,
+        data.price_overview.initial / 100,
+        data.price_overview.final / 100,
+        data.price_overview.discount_percent,
+      ]);
+    }
 
     // // 3. 개발사/퍼블리셔
     // await client.query(companyQuery, [data.developers || [], data.steam_appid]);
