@@ -87,7 +87,7 @@ async function processGame(client, appId) {
     if (!game || !game[appId]?.success) return;
 
     const data = game[appId].data;
-    console.log("game data =======", data);
+
     await client.query("BEGIN");
 
     // 날짜 변환 적용
