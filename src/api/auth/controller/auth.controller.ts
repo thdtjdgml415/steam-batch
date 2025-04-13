@@ -3,15 +3,22 @@ import passport from "passport";
 
 export const AuthController = {
   initiateSteamAuth: passport.authenticate("steam"),
-
+  // return 후 처리
+  // SteamStrategy에서 done()을 호출하면 이곳으로 돌아옴
   handleSteamCallback: (req: Request, res: Response, next: NextFunction) => {
-    passport.authenticate("steam", async (err: Error, user: any) => {
-      if (err) return next(err);
-      req.logIn(user, (loginErr) => {
-        if (loginErr) return next(loginErr);
-        res.redirect("/profile");
-      });
-    })(req, res, next);
+    passport.authenticate(
+      "steam",
+      { failureRedirect: "/" },
+      async (err: Error, user: any) => {
+        const { token } = user;
+        if (err) return next(err);
+
+        req.logIn(user.user, (loginErr) => {
+          if (loginErr) return next(loginErr);
+          res.redirect("/");
+        });
+      }
+    )(req, res, next);
   },
 
   getProfile: (req: Request, res: Response) => {
